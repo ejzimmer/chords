@@ -37,6 +37,17 @@
         const frequencies = [ 329.63, 440, 587.33, 783.99, 987.77, 1318.51 ];
 
         frequencies.forEach(note => this.shadowRoot.innerHTML += `<guitar-string open="${note}"></string>`);
+        this.strings = Array.from(this.shadowRoot.querySelectorAll('guitar-string'));
+
+        this.addEventListener('playing', (event) => {
+          const lowestString = this.strings.findIndex(string => string.isPlaying);
+          if (lowestString !== -1) {
+            const stringsToPlay = this.strings.slice(lowestString);
+            stringsToPlay.filter(string => !string.isPlaying).forEach(string => string.strum());
+          } else {
+            this.strings.forEach(string => string.stopPlaying());
+          }
+        });
       }
     }
     customElements.define('my-guitar', Guitar);
@@ -65,7 +76,7 @@
       }
 
       get highestPressedFret() {
-        const lastFret = [...this.frets].reverse().findIndex(fret => fret.pressed);
+        const lastFret = [...this.frets].reverse().findIndex(fret => fret.isPressed);
         if (lastFret !== -1) return this.frets.length - lastFret; 
       }
 
@@ -84,17 +95,32 @@
       }
 
       play() {
-        if (this.oscillator) this.oscillator.stop();
+        this.stopPlaying();
         const fret = this.highestPressedFret;
-        if (!fret) { return; }
+        this.isPlaying = !!fret;
+        if (this.isPlaying) {
+          const frequency = this.openNote * (2 ** (fret / 12))
+          this.playNote(frequency);
+        }
+        this.dispatchEvent(new CustomEvent('playing', { composed: true, bubbles: true }));
+      }
 
+      strum() {
+        this.stopPlaying();
+        this.playNote(this.openNote);
+      }
+
+      stopPlaying() {
+        if (this.oscillator) {
+          this.oscillator.stop();
+        }
+      }
+
+      playNote(frequency) {
         this.oscillator = this.audioContext.createOscillator();
-
-        const frequency = this.openNote * (2 ** (fret / 12))
         this.oscillator.frequency.value = frequency;
         this.oscillator.connect(this.audioContext.destination);
         this.oscillator.start();
-
       }
 
     }
@@ -128,11 +154,11 @@
         this.button = this.shadowRoot.querySelector('button');
         this.button.addEventListener('touchstart', () => {
           this.classList.add('active');
-          this.pressed = true
+          this.isPressed = true
         });
         this.button.addEventListener('touchend', () => {
           this.classList.remove('active');
-          this.pressed = false
+          this.isPressed = false
         });
         this.button.addEventListener('contextmenu', event => event.preventDefault());
       }
