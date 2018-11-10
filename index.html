@@ -60,17 +60,8 @@
         
         this.audioContext = new AudioContext();
 
-        this.addEventListener('touchstart', () => {
-          this.play();
-        });
-        this.addEventListener('touchend', () => {
-          if (this.highestPressedFret) {
-            this.play();
-          } else {
-            this.oscillator.stop();
-          }
-        });
-
+        this.addEventListener('touchstart', this.play.bind(this));
+        this.addEventListener('touchend', this.play.bind(this));
       }
 
       get highestPressedFret() {
@@ -94,8 +85,13 @@
 
       play() {
         if (this.oscillator) this.oscillator.stop();
+        const fret = this.highestPressedFret;
+        if (!fret) { return; }
+
         this.oscillator = this.audioContext.createOscillator();
-        this.oscillator.frequency.value = this.openNote;
+
+        const frequency = this.openNote * (2 ** (fret / 12))
+        this.oscillator.frequency.value = frequency;
         this.oscillator.connect(this.audioContext.destination);
         this.oscillator.start();
 
