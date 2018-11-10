@@ -82,7 +82,7 @@
 
       connectedCallback() {
         const height = window.innerHeight;
-        const fretHeight = document.body.computedStyleMap().get('--fret-height').toString().trim().replace('px', '');  
+        const fretHeight = document.querySelector('body').computedStyleMap().get('--fret-height').toString().trim().replace('px', '');  
         const numberOfFrets = Math.ceil(height / fretHeight);
 
         const string = this.shadowRoot.querySelector('.string');
