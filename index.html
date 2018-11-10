@@ -61,15 +61,21 @@
         this.audioContext = new AudioContext();
 
         this.addEventListener('touchstart', () => {
-          this.oscillator = this.audioContext.createOscillator();
-          this.oscillator.frequency.value = this.openNote;
-          this.oscillator.connect(this.audioContext.destination);
-          this.oscillator.start();
+          this.play();
         });
         this.addEventListener('touchend', () => {
-          this.oscillator.stop();
-        })
+          if (this.highestPressedFret) {
+            this.play();
+          } else {
+            this.oscillator.stop();
+          }
+        });
 
+      }
+
+      get highestPressedFret() {
+        const lastFret = [...this.frets].reverse().findIndex(fret => fret.pressed);
+        if (lastFret !== -1) return this.frets.length - lastFret; 
       }
 
       connectedCallback() {
@@ -79,11 +85,22 @@
 
         const string = this.shadowRoot.querySelector('.string');
 
-        for (let i = 1; i <= numberOfFrets; i++) {    
+        for (let i = 0; i < numberOfFrets; i++) {    
           string.innerHTML += `<guitar-fret></guitar-fret>`;
         }
-      
+
+        this.frets = Array.from(string.children);
       }
+
+      play() {
+        if (this.oscillator) this.oscillator.stop();
+        this.oscillator = this.audioContext.createOscillator();
+        this.oscillator.frequency.value = this.openNote;
+        this.oscillator.connect(this.audioContext.destination);
+        this.oscillator.start();
+
+      }
+
     }
     customElements.define('guitar-string', String);
 
@@ -113,8 +130,14 @@
           <button class="fret"></button>`;
 
         this.button = this.shadowRoot.querySelector('button');
-        this.button.addEventListener('touchstart', () => this.pressed = true);
-        this.button.addEventListener('touchend', () => this.pressed = false);
+        this.button.addEventListener('touchstart', () => {
+          this.classList.add('active');
+          this.pressed = true
+        });
+        this.button.addEventListener('touchend', () => {
+          this.classList.remove('active');
+          this.pressed = false
+        });
         this.button.addEventListener('contextmenu', event => event.preventDefault());
       }
     }
