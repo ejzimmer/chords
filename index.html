@@ -121,8 +121,8 @@
         this.note = this.attributes.note.value;
 
         this.button = this.shadowRoot.querySelector('button');
-        this.button.addEventListener('gotpointercapture', this.play.bind(this));
-        this.button.addEventListener('lostpointercapture', this.stop.bind(this));
+        this.button.addEventListener('touchstart', this.play.bind(this));
+        this.button.addEventListener('touchend', this.stop.bind(this));
         this.button.addEventListener('contextmenu', event => event.preventDefault());
       }
 
