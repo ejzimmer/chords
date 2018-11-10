@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+          --fret-width: 40px;
+          --fret-height: 80px;
+          --string-width: 2px;
+          display: flex;
+          justify-content: center;
+          margin: 0;
+          background: #333;
+        }
+    </style>
+</head>
+<body>
+  <my-guitar></my-guitar>
+
+  <script>
+    class Guitar extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host {
+              display: flex;
+              justify-content: center;
+            }
+          </style>`;
+        
+        const strings = ['E', 'A', 'D', 'G', 'B', 'E'];
+        strings.forEach(string => this.shadowRoot.innerHTML += `<guitar-string open="${string}"></string>`);
+
+        this.shadowRoot.addEventListener('strung', event => console.log('guitar', event));
+      }
+    }
+    customElements.define('my-guitar', Guitar);
+
+    class String extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.shadowRoot.innerHTML = `
+          <style>
+            .string {
+              height: 100vh;
+              width: var(--string-width);
+              background: silver;
+              margin: 0 calc((var(--fret-width) - var(--string-width)) / 2);
+            }
+          </style>
+          <div class="string"></div>`;
+
+        this.notes = ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#'];
+        this.openNote = this.attributes.open.value;
+
+        // todo: make only the highest note on the string play
+        
+        this.audioContext = new AudioContext();
+
+        this.shadowRoot.addEventListener('fret-pressed', () => {
+          this.oscillator = this.audioContext.createOscillator();
+          this.oscillator.connect(this.audioContext.destination);
+          this.oscillator.start();
+        });
+        this.shadowRoot.addEventListener('fret-stopped', () => {
+          this.oscillator.stop();
+          this.oscillator.disconnect();
+        });
+      }
+
+      connectedCallback() {
+        const height = window.innerHeight;
+        const fretHeight = document.body.computedStyleMap().get('--fret-height').toString().trim().replace('px', '');  
+        const numberOfFrets = Math.ceil(height / fretHeight);
+
+        const string = this.shadowRoot.querySelector('.string');
+        const noteIndex = this.notes.findIndex(note => note === this.openNote);
+        const numberOfNotes = this.notes.length;
+
+        for (let i = 1; i <= numberOfFrets; i++) {
+          const note = this.notes[(noteIndex + i) % numberOfNotes];
+          string.innerHTML += `<guitar-fret note="${note}"></guitar-fret>`;
+        }
+      
+      }
+    }
+    customElements.define('guitar-string', String);
+
+    class Fret extends HTMLElement {
+      constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+
+        this.shadowRoot.innerHTML = `
+          <style>
+            .fret {
+              background: none;
+              border: none;
+              padding: 0;
+              border-bottom: 2px solid #888;
+              width: var(--fret-width);
+              margin-left: calc(var(--fret-width) / -2);
+              height: var(--fret-height);
+            }
+            .fret:focus, .fret:active {
+              outline: none;
+            }
+            .fret.active {
+              background: #ddd;
+            }
+          </style>
+          <button class="fret"></button>`;
+
+        this.note = this.attributes.note.value;
+
+        this.button = this.shadowRoot.querySelector('button');
+        this.button.addEventListener('gotpointercapture', this.play.bind(this));
+        this.button.addEventListener('lostpointercapture', this.stop.bind(this));
+        this.button.addEventListener('contextmenu', event => event.preventDefault());
+      }
+
+      play() {
+        this.button.classList.add('active');
+        this.dispatchEvent(
+          new CustomEvent('fret-pressed', { detail: this.note, composed: true, bubbles: true }));
+      }
+      stop() {
+        this.button.classList.remove('active');
+        this.dispatchEvent(new CustomEvent('fret-stopped', { composed: true, bubbles: true }));
+      }
+    }
+    customElements.define('guitar-fret', Fret);
+  </script>
+</body>
+</html>
