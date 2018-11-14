@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Page Title</title>
+    <title>Chords</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
@@ -82,7 +82,13 @@
 
       connectedCallback() {
         const height = window.innerHeight;
-        const fretHeight = document.querySelector('body').computedStyleMap().get('--fret-height').toString().trim().replace('px', '');  
+        
+        const body = document.querySelector('body');
+        if (body.computedStyleMap) {
+          var fretHeight = body.computedStyleMap().get('--fret-height').toString().trim().replace('px', '');
+        } else {
+          var fretHeight = '40';
+        }
         const numberOfFrets = Math.ceil(height / fretHeight);
 
         const string = this.shadowRoot.querySelector('.string');
@@ -148,13 +154,33 @@
             .fret.active {
               background: #ddd;
             }
+
+            .touch {
+              position: fixed;
+              border: 2px solid green;
+              background-color: rgba(0, 255, 0, .6);
+            }
           </style>
           <button class="fret"></button>`;
 
         this.button = this.shadowRoot.querySelector('button');
-        this.button.addEventListener('touchstart', () => {
+        this.button.addEventListener('touchstart', (event) => {
           this.classList.add('active');
-          this.isPressed = true
+          this.isPressed = true;
+          this.touch = document.createElement('div');
+          this.touch.classList.add('touch');
+          console.log(event);
+          this.touch.targetTouches
+
+
+
+
+
+
+
+
+
+          
         });
         this.button.addEventListener('touchend', () => {
           this.classList.remove('active');
