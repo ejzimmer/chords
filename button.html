@@ -1,0 +1,47 @@
+<!DOCTYPE <!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <style>
+        button {
+            --main-colour: hsl(200, 50%, 50%); 
+            --accent-colour: hsl(200, 50%, 30%); 
+            background: var(--main-colour);
+            border: var(--accent-colour);
+            color: white;
+            padding: 2em;
+            cursor: pointer;
+            transition: background-size .5s;
+        }        
+    </style>
+</head>
+<body>
+    <button>Click me</button>
+    <script>
+        const button = document.querySelector('button');
+
+        button.addEventListener('click', event => {
+            const element = event.target;
+
+            const x = event.offsetX;
+            const y = event.offsetY;
+
+            requestAnimationFrame(() => {
+                element.style.background = `radial-gradient(circle at ${x}px ${y}px, var(--accent-colour) 1%, var(--main-colour) 1%)`;
+                element.style.backgroundSize = '100%';
+                requestAnimationFrame(() => {
+                    element.style.backgroundSize = '10000%';
+                });
+            });
+
+            element.addEventListener('transitionend', () => {
+                element.style.background = 'var(--main-colour)';
+            }, { once: true });
+        });
+        
+
+    </script>
+</body>
+</html>
